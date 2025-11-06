@@ -8,61 +8,148 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class Example implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'Example',
+		displayName: '数据湖连接器',
 		name: 'example',
+		// 建议为您自己的节点创建一个SVG图标
 		icon: { light: 'file:example.svg', dark: 'file:example.dark.svg' },
-		group: ['input'],
+		group: ['input'], // 您可以根据节点功能更改分组，例如 'transform', 'action'
 		version: 1,
-		description: 'Basic Example Node',
+		description: '连接数据湖并根据提示词获取信息',
 		defaults: {
-			name: 'Example',
+			name: '数据湖连接器',
 		},
+		// 此节点将作为起点，因此没有输入
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		properties: [
-			// Node properties which the user gets displayed and
-			// can change on the node.
+			// 1. 新增的输入参数
 			{
-				displayName: 'My String',
-				name: 'myString',
+				displayName: 'Host 地址',
+				name: 'host',
 				type: 'string',
 				default: '',
-				placeholder: 'Placeholder value',
-				description: 'The description text',
+				required: true, // 设置为必填项
+				placeholder: '例如: 127.0.0.1 或 aihost.example.com',
+				description: '数据湖服务的主机地址',
+			},
+			{
+				displayName: '端口号',
+				name: 'port',
+				type: 'number',
+				default: 8080,
+				required: true,
+				placeholder: '例如: 8080',
+				description: '数据湖服务的端口号',
+			},
+			{
+				displayName: '用户名',
+				name: 'username',
+				type: 'string',
+				default: '',
+				description: '用于连接服务的用户名',
+			},
+			{
+				displayName: '密码',
+				name: 'password',
+				type: 'string',
+				// 使用 password 类型可以在UI上隐藏输入内容
+				typeOptions: {
+					password: true,
+				},
+				default: '',
+				description: '用于连接服务的密码',
+			},
+			{
+				displayName: '系统提示词 (System Prompt)',
+				name: 'system_prompt',
+				type: 'string',
+				// 使用多行输入框
+				typeOptions: {
+					rows: 4,
+				},
+				default: '',
+				placeholder: '例如: 你是一个数据分析助手...',
+				description: '定义AI模型的角色和行为的系统级指令',
+			},
+			{
+				displayName: '用户提示词 (User Prompt)',
+				name: 'user_prompt',
+				type: 'string',
+				typeOptions: {
+					rows: 6,
+				},
+				default: '',
+				required: true,
+				placeholder: '例如: 请帮我查询上个季度的销售额前十的产品...',
+				description: '用户输入的具体问题或指令',
 			},
 		],
 	};
 
-	// The function below is responsible for actually doing whatever this node
-	// is supposed to do. In this case, we're just appending the `myString` property
-	// with whatever the user has entered.
-	// You can make async calls and use `await`.
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		// 因为这个节点是输入节点(inputs: [])，它通常只执行一次
+		// 我们保留循环结构以保持灵活性，但对于输入节点，items通常为空
 		const items = this.getInputData();
+		const returnData: INodeExecutionData[] = [];
 
-		let item: INodeExecutionData;
-		let myString: string;
+		// 如果作为输入节点，通常只运行一次
+		const loopCount = items.length || 1;
 
-		// Iterates over all input items and add the key "myString" with the
-		// value the parameter "myString" resolves to.
-		// (This could be a different value for each item in case it contains an expression)
-		for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
+		for (let itemIndex = 0; itemIndex < loopCount; itemIndex++) {
 			try {
-				myString = this.getNodeParameter('myString', itemIndex, '') as string;
-				item = items[itemIndex];
+				// 2. 获取所有在 properties 中定义的参数值
+				const host = this.getNodeParameter('host', itemIndex, '') as string;
+				const port = this.getNodeParameter('port', itemIndex, 0) as number;
+				const username = this.getNodeParameter('username', itemIndex, '') as string;
+				// const password = this.getNodeParameter('password', itemIndex, '') as string;
+				const systemPrompt = this.getNodeParameter('system_prompt', itemIndex, '') as string;
+				const userPrompt = this.getNodeParameter('user_prompt', itemIndex, '') as string;
 
-				item.json.myString = myString;
+				// --- 在这里开始编写您的核心业务逻辑 ---
+
+				// 1. 使用获取到的参数连接您的服务
+				// 例如: const client = await connectToMyService({ host, port, username, password });
+
+				// 2. 调用API并传递提示词
+				// 例如: const apiResult = await client.query({ system: systemPrompt, user: userPrompt });
+
+				// 3. 将API返回的结果构造成您想要的JSON格式
+				// 这是为您预留的、最终要输出的JSON对象
+				const outputJson = {
+					status: 'success',
+					timestamp: new Date().toISOString(),
+					request: {
+						host,
+						port,
+						user: username,
+						systemPrompt,
+						userPrompt,
+					},
+					// 您可以在这里填充从服务获取的真实数据
+					// responseData: apiResult,
+					responseData: {
+						message: "这里是您处理后的最终数据",
+						details: "此部分由您的业务逻辑填充",
+					},
+				};
+
+				// --- 核心业务逻辑结束 ---
+
+				// 将最终的JSON数据包装后添加到返回数组中
+				returnData.push({ json: outputJson });
+
 			} catch (error) {
-				// This node should never fail but we want to showcase how
-				// to handle errors.
 				if (this.continueOnFail()) {
-					items.push({ json: this.getInputData(itemIndex)[0].json, error, pairedItem: itemIndex });
+					// 如果节点配置为失败时继续，则将错误信息附加到输出中
+					const errorData = { json: {}, error: error.message };
+					if (items.length > 0) {
+						errorData.json = this.getInputData(itemIndex)[0].json;
+						// errorData.pairedItem = itemIndex;
+					}
+					items.push(errorData as INodeExecutionData);
 				} else {
-					// Adding `itemIndex` allows other workflows to handle this error
 					if (error.context) {
-						// If the error thrown already contains the context property,
-						// only append the itemIndex
 						error.context.itemIndex = itemIndex;
 						throw error;
 					}
@@ -73,6 +160,7 @@ export class Example implements INodeType {
 			}
 		}
 
-		return [items];
+		// n8n期望的返回格式是一个包含数据数组的数组
+		return [returnData];
 	}
 }

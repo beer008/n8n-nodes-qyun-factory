@@ -1,19 +1,19 @@
 {
-	"name": "n8n-nodes-<...>",
+	"name": "n8n-nodes-qyun-factory",
 	"version": "0.1.0",
-	"description": "",
+	"description": "qyun factory node for n8n",
 	"license": "MIT",
 	"homepage": "",
 	"keywords": [
 		"n8n-community-node-package"
 	],
 	"author": {
-		"name": "",
-		"email": ""
+		"name": "dawn",
+		"email": "bsg951384071@gmail.com"
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/<...>/n8n-nodes-<...>.git"
+		"url": "https://github.com/beer008/n8n-nodes-qyun-factory.git"
 	},
 	"scripts": {
 		"build": "n8n-node build",
@@ -27,6 +27,9 @@
 	"files": [
 		"dist"
 	],
+	"overrides": {
+		"change-case": "4.1.2"
+	},
 	"n8n": {
 		"n8nNodesApiVersion": 1,
 		"strict": true,
