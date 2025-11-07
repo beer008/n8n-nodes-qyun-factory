@@ -8,15 +8,15 @@ import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class Example implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: '数据湖连接器',
+		displayName: '数据湖仓连接器',
 		name: 'example',
 		// 建议为您自己的节点创建一个SVG图标
 		icon: { light: 'file:example.svg', dark: 'file:example.dark.svg' },
 		group: ['input'], // 您可以根据节点功能更改分组，例如 'transform', 'action'
 		version: 1,
-		description: '连接数据湖并根据提示词获取信息',
+		description: '连接数据湖仓并根据提示词获取信息',
 		defaults: {
-			name: '数据湖连接器',
+			name: '数据湖仓连接器',
 		},
 		// 此节点将作为起点，因此没有输入
 		inputs: [NodeConnectionTypes.Main],
