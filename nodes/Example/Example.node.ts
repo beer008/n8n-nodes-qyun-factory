@@ -3,6 +3,7 @@ import type {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	IHttpRequestOptions,
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
@@ -107,15 +108,34 @@ export class Example implements INodeType {
 				const userPrompt = this.getNodeParameter('user_prompt', itemIndex, '') as string;
 
 				// --- 在这里开始编写您的核心业务逻辑 ---
+				// 1. 构造请求的 URL
+				// 注意：根据您的 curl 示例，协议是 http
+				const url = `http://${host}:${port}/api/v1/task/goods`;
 
-				// 1. 使用获取到的参数连接您的服务
-				// 例如: const client = await connectToMyService({ host, port, username, password });
+				// 2. 准备请求体 (Body)
+				// 根据您的 curl 命令，请求体包含一个 limit 字段
+				const requestBody = {
+					limit: 10,
+				};
 
-				// 2. 调用API并传递提示词
-				// 例如: const apiResult = await client.query({ system: systemPrompt, user: userPrompt });
+				// 3. 设置请求选项，包括方法、URL、请求头和请求体
+				const options: IHttpRequestOptions = {
+					method: 'POST',
+					url: url,
+					headers: {
+						'accept': 'application/json',
+						'Content-Type': 'application/json',
+					},
+					body: requestBody,
+					// json: true 会自动将 body 序列化为 JSON 字符串，
+					// 并将收到的响应自动解析为 JSON 对象
+					json: true,
+				};
 
-				// 3. 将API返回的结果构造成您想要的JSON格式
-				// 这是为您预留的、最终要输出的JSON对象
+				// 4. 发送 HTTP 请求并等待响应
+				// apiResult 将会是服务器返回的已解析的 JSON 对象
+				const apiResult = await this.helpers.httpRequest(options);
+
 				const outputJson = {
 					status: 'success',
 					timestamp: new Date().toISOString(),
@@ -127,11 +147,7 @@ export class Example implements INodeType {
 						userPrompt,
 					},
 					// 您可以在这里填充从服务获取的真实数据
-					// responseData: apiResult,
-					responseData: {
-						message: "这里是您处理后的最终数据",
-						details: "此部分由您的业务逻辑填充",
-					},
+					responseData: apiResult,
 				};
 
 				// --- 核心业务逻辑结束 ---
